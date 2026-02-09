@@ -1,0 +1,806 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto+Condensed:wght@400;700&family=Orbitron:wght@400;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    overflow: hidden;
+    background: #0a0a0a;
+    font-family: 'Roboto Condensed', sans-serif;
+    cursor: crosshair;
+}
+
+.hidden {
+    display: none;
+}
+
+#game-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+}
+
+canvas {
+    display: block;
+}
+
+/* HUD Styles */
+#hud {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.hud-element {
+    position: absolute;
+    color: #00ff88;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+/* Crosshair */
+#crosshair {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 200;
+    pointer-events: none;
+}
+
+#crosshair::before,
+#crosshair::after {
+    content: '';
+    position: absolute;
+    background: rgba(255, 50, 50, 0.9);
+    box-shadow: 0 0 5px rgba(255, 50, 50, 0.8);
+}
+
+#crosshair::before {
+    width: 2px;
+    height: 20px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#crosshair::after {
+    width: 20px;
+    height: 2px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#crosshair .dot {
+    width: 4px;
+    height: 4px;
+    background: #ff3232;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 8px rgba(255, 50, 50, 1);
+}
+
+/* Weapon Info */
+#weapon-info {
+    bottom: 30px;
+    right: 30px;
+    text-align: right;
+    font-family: 'Orbitron', monospace;
+}
+
+#weapon-name {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+#ammo-count {
+    font-size: 48px;
+    font-weight: 700;
+    color: #00ff88;
+    line-height: 1;
+}
+
+#ammo-count span {
+    font-size: 24px;
+    color: #666;
+}
+
+/* Health Bar */
+#health-container {
+    bottom: 30px;
+    left: 30px;
+}
+
+#health-label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 5px;
+    font-family: 'Orbitron', monospace;
+}
+
+#health-bar {
+    width: 200px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid #333;
+    position: relative;
+    overflow: hidden;
+}
+
+#health-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff3232, #ff6666);
+    transition: width 0.3s;
+    box-shadow: 0 0 20px rgba(255, 50, 50, 0.5);
+}
+
+#health-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    color: #fff;
+    text-shadow: 1px 1px 2px #000;
+}
+
+/* Mission Info */
+#mission-info {
+    top: 30px;
+    left: 30px;
+}
+
+#mission-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: #fff;
+    letter-spacing: 2px;
+}
+
+#mission-objective {
+    font-size: 14px;
+    color: #00ff88;
+    margin-top: 5px;
+}
+
+#mission-timer {
+    font-family: 'Orbitron', monospace;
+    font-size: 18px;
+    color: #ffaa00;
+    margin-top: 10px;
+}
+
+/* Compass */
+#compass {
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 8px 20px;
+    border: 1px solid #333;
+}
+
+/* Team Status */
+#team-status {
+    top: 100px;
+    right: 30px;
+}
+
+.team-member {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.team-icon {
+    width: 24px;
+    height: 24px;
+    background: #00ff88;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #000;
+    font-weight: bold;
+}
+
+.team-icon.down {
+    background: #ff3232;
+}
+
+/* Equipment Slots */
+#equipment {
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+}
+
+.equip-slot {
+    width: 60px;
+    height: 60px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #888;
+    position: relative;
+}
+
+.equip-slot.active {
+    border-color: #00ff88;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+}
+
+.equip-slot .key {
+    position: absolute;
+    top: 2px;
+    left: 5px;
+    font-size: 10px;
+    color: #666;
+}
+
+.equip-slot .count {
+    position: absolute;
+    bottom: 2px;
+    right: 5px;
+    font-size: 12px;
+    color: #00ff88;
+}
+
+.equip-icon {
+    font-size: 24px;
+}
+
+/* Hit Marker */
+#hit-marker {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    opacity: 0;
+    z-index: 201;
+}
+
+#hit-marker.show {
+    animation: hitFlash 0.15s ease-out;
+}
+
+@keyframes hitFlash {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(1.5); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+}
+
+#hit-marker::before,
+#hit-marker::after {
+    content: '';
+    position: absolute;
+    background: #fff;
+}
+
+#hit-marker::before {
+    width: 15px;
+    height: 3px;
+    transform: rotate(45deg);
+}
+
+#hit-marker::after {
+    width: 15px;
+    height: 3px;
+    transform: rotate(-45deg);
+}
+
+/* Damage Indicator */
+#damage-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 99;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(255, 0, 0, 0) 100%);
+    transition: background 0.2s;
+}
+
+#damage-overlay.hit {
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(255, 0, 0, 0.5) 100%);
+}
+
+/* Menu Screen */
+#menu-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#menu-screen.hidden {
+    display: none;
+}
+
+#menu-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 80px;
+    color: #fff;
+    letter-spacing: 10px;
+    text-shadow: 0 0 50px rgba(0, 255, 136, 0.3);
+    margin-bottom: 10px;
+}
+
+#menu-subtitle {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    color: #00ff88;
+    letter-spacing: 5px;
+    margin-bottom: 50px;
+}
+
+.menu-section {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.menu-label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 15px;
+    letter-spacing: 3px;
+}
+
+.mode-buttons {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 800px;
+}
+
+.menu-btn {
+    padding: 20px 40px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 2px;
+    background: transparent;
+    border: 2px solid #333;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.3s;
+    min-width: 200px;
+}
+
+.menu-btn:hover {
+    border-color: #00ff88;
+    color: #00ff88;
+    box-shadow: 0 0 30px rgba(0, 255, 136, 0.2);
+    transform: translateY(-2px);
+}
+
+.menu-btn.primary {
+    background: #00ff88;
+    color: #000;
+    border-color: #00ff88;
+}
+
+.menu-btn.primary:hover {
+    background: #00cc6a;
+    box-shadow: 0 0 40px rgba(0, 255, 136, 0.4);
+}
+
+#controls-info {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: #444;
+    text-align: center;
+    line-height: 1.8;
+}
+
+#controls-info span {
+    color: #666;
+    background: #1a1a1a;
+    padding: 2px 8px;
+    margin: 0 3px;
+    border-radius: 3px;
+}
+
+/* Briefing Screen */
+#briefing-screen {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(5, 8, 12, 0.95) 0%, rgba(10, 18, 30, 0.98) 100%);
+    z-index: 1200;
+    color: #e6f5ff;
+    display: flex;
+    flex-direction: column;
+    padding: 40px 6vw;
+    gap: 24px;
+}
+
+.briefing-header {
+    text-align: center;
+}
+
+.briefing-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 64px;
+    letter-spacing: 6px;
+    color: #ffffff;
+    text-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+}
+
+.briefing-subtitle {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    color: #00ff88;
+    letter-spacing: 4px;
+}
+
+.briefing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+}
+
+.briefing-panel {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    padding: 18px;
+    min-height: 180px;
+}
+
+.briefing-panel h3 {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    color: #00ff88;
+    margin-bottom: 10px;
+    letter-spacing: 2px;
+}
+
+.briefing-panel ul {
+    list-style: none;
+    padding-left: 0;
+    line-height: 1.6;
+    color: #c8d6e0;
+}
+
+.briefing-panel li::before {
+    content: '▸';
+    color: #00ff88;
+    margin-right: 8px;
+}
+
+.briefing-panel p {
+    color: #c8d6e0;
+    line-height: 1.6;
+}
+
+.briefing-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+
+.loadout {
+    display: grid;
+    gap: 8px;
+    color: #c8d6e0;
+}
+
+/* Interaction Prompt */
+#interaction-prompt {
+    position: fixed;
+    top: 60%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 10px 20px;
+    border: 1px solid #00ff88;
+    display: none;
+    z-index: 150;
+}
+
+#interaction-prompt span {
+    color: #00ff88;
+}
+
+/* Notification */
+#notification {
+    position: fixed;
+    top: 150px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    color: #ffaa00;
+    text-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 160;
+}
+
+#notification.show {
+    opacity: 1;
+}
+
+/* Mission Status */
+#mission-status {
+    bottom: 30px;
+    left: 260px;
+    width: 220px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid #223;
+    padding: 12px;
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    color: #c8d6e0;
+}
+
+.status-title {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #00ff88;
+    margin-bottom: 8px;
+}
+
+.status-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+/* Status Feed */
+#status-feed {
+    top: 170px;
+    left: 30px;
+    width: 260px;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid #223;
+    padding: 10px;
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    color: #c8d6e0;
+}
+
+#status-feed-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+    display: grid;
+    gap: 6px;
+}
+
+#status-feed-list li {
+    opacity: 0.9;
+}
+
+/* Minimap */
+#minimap {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 150px;
+    height: 150px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #333;
+    z-index: 100;
+}
+
+#minimap-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Tactical Order Wheel */
+#order-wheel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 300px;
+    display: none;
+    z-index: 300;
+}
+
+#order-wheel.show {
+    display: block;
+}
+
+.order-option {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #333;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #888;
+    font-size: 10px;
+    text-align: center;
+}
+
+.order-option:hover {
+    border-color: #00ff88;
+    color: #00ff88;
+    transform: scale(1.1);
+}
+
+.order-option .icon {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+/* Scoreboard */
+#scoreboard {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 8, 12, 0.85);
+    z-index: 1500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #e6f5ff;
+    font-family: 'Orbitron', monospace;
+}
+
+.scoreboard-title {
+    font-size: 32px;
+    letter-spacing: 6px;
+    margin-bottom: 20px;
+    color: #00ff88;
+}
+
+.scoreboard-grid {
+    display: grid;
+    gap: 16px;
+    min-width: 320px;
+}
+
+.scoreboard-item {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+    padding-bottom: 6px;
+    font-size: 14px;
+}
+
+.scoreboard-item strong {
+    color: #ffffff;
+}
+
+.scoreboard-hint {
+    margin-top: 24px;
+    font-size: 12px;
+    color: #98a9b8;
+}
+
+.scoreboard-hint span {
+    color: #00ff88;
+}
+
+/* Loading Screen */
+#loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #0a0a0a;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#loading-screen.hidden {
+    display: none;
+}
+
+.loading-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    color: #00ff88;
+    letter-spacing: 3px;
+}
+
+.loading-bar {
+    width: 300px;
+    height: 4px;
+    background: #1a1a1a;
+    margin-top: 20px;
+    overflow: hidden;
+}
+
+.loading-fill {
+    height: 100%;
+    background: #00ff88;
+    animation: loading 2s ease-in-out infinite;
+}
+
+@keyframes loading {
+    0% { width: 0%; }
+    50% { width: 100%; }
+    100% { width: 0%; }
+}
+
+/* Lean Indicator */
+#lean-indicator {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    color: #00ff88;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 150;
+}
+
+#lean-indicator.left {
+    left: 50px;
+    opacity: 1;
+}
+
+#lean-indicator.right {
+    right: 50px;
+    opacity: 1;
+}
+
+/* Stance Indicator */
+#stance-indicator {
+    position: fixed;
+    bottom: 120px;
+    left: 30px;
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    color: #888;
+}
+
+.stance-icon {
+    font-size: 24px;
+    color: #00ff88;
+}
+    /* Single mission + map: Gas Station Hostage Rescue */
