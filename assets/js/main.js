@@ -51,6 +51,11 @@ let effects = [];
 let pendingMission = null;
 let missionStartTime;
 let scoreboardVisible = false;
+let statusUpdateTimer = 0;
+let movementTime = 0;
+let weaponSway = { x: 0, y: 0 };
+let previousYaw = 0;
+let previousPitch = 0;
 
 // -------------------------------
 // Collision (solids / blockers)
@@ -1986,6 +1991,11 @@ function createWeaponModel() {
 let weaponModel;
 
 function setupWeapon() {
+    if (weaponModel) {
+        camera.remove(weaponModel);
+        scene.remove(weaponModel);
+        weaponModel = null;
+    }
     weaponModel = createWeaponModel();
     weaponModel.position.set(0.3, -0.25, -0.5);
     camera.add(weaponModel);
@@ -2673,14 +2683,20 @@ function updateAI(delta) {
                 }
             }
 
-            // Shooting (keeps your existing behavior, but now uses true LOS and alert state)
+            // Shooting (LOS-aware, accuracy scales with distance + sprinting)
             if (entity.userData.isAlert) {
                 const now = Date.now();
-                if (now - entity.userData.lastShot > 2000 && distance < 15) {
+                const fireDelay = entity.userData.aimingAtPlayer ? 1200 : 1800;
+                if (now - entity.userData.lastShot > fireDelay && distance < 18) {
                     entity.userData.lastShot = now;
-                    // Enemy shoots at player (requires line-of-sight; no shooting through walls)
-                    if (Math.random() < 0.3 && enemyHasLineOfSight(entity)) {
-                        takeDamage(10);
+                    if (enemyHasLineOfSight(entity)) {
+                        const baseHit = 0.16 / Math.max(distance, 6);
+                        const sprintPenalty = gameState.isSprinting ? 0.7 : 1;
+                        const hitChance = baseHit * sprintPenalty;
+                        if (Math.random() < hitChance) {
+                            takeDamage(10);
+                            showNotification('HIT!', '#ff3333');
+                        }
                     }
                 }
             }
@@ -2726,14 +2742,18 @@ function updateEffects(delta) {
 
 // Player Movement
 function updatePlayer(delta) {
-    const speed = gameState.isSprinting ? 8 : (gameState.stance === 'crouching' ? 2 : 
-                 gameState.stance === 'prone' ? 1 : 4);
+    const baseSpeed = gameState.isSprinting ? 7 : (gameState.stance === 'crouching' ? 2.2 : 
+                 gameState.stance === 'prone' ? 1.1 : 3.8);
 
     const moveX = (keys['KeyD'] ? 1 : 0) - (keys['KeyA'] ? 1 : 0);
     const moveZ = (keys['KeyS'] ? 1 : 0) - (keys['KeyW'] ? 1 : 0);
 
     // No movement input
     if (moveX === 0 && moveZ === 0) {
+        playerVelocity.x *= 0.75;
+        playerVelocity.z *= 0.75;
+        movementTime += delta * 0.5;
+
         // Still update camera orientation & lean
         camera.position.set(player.x, player.y, player.z);
         camera.rotation.order = 'YXZ';
@@ -2742,6 +2762,7 @@ function updatePlayer(delta) {
         camera.rotation.z = gameState.leaning * 0.2;
         updateLeanDisplay();
         checkExfil();
+        updateWeaponSway(delta, 0);
         return;
     }
 
@@ -2751,7 +2772,11 @@ function updatePlayer(delta) {
     forward.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
     right.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
 
-    const movement = forward.add(right).normalize().multiplyScalar(speed * delta);
+    const desired = forward.add(right).normalize().multiplyScalar(baseSpeed);
+    const accel = gameState.isSprinting ? 12 : 9;
+    playerVelocity.x += (desired.x - playerVelocity.x) * Math.min(1, accel * delta);
+    playerVelocity.z += (desired.z - playerVelocity.z) * Math.min(1, accel * delta);
+    const movement = new THREE.Vector3(playerVelocity.x, 0, playerVelocity.z).multiplyScalar(delta);
 
     // --- Collision: sweep X then Z ---
     // Update solid boxes occasionally (doors can animate)
@@ -2772,7 +2797,9 @@ function updatePlayer(delta) {
     }
 
     // Update camera transform
-    camera.position.set(player.x, player.y, player.z);
+    movementTime += delta * (gameState.isSprinting ? 2.5 : 1.6);
+    const bob = Math.sin(movementTime * 6) * 0.03 * (gameState.isSprinting ? 1.2 : 1);
+    camera.position.set(player.x, player.y + bob, player.z);
     camera.rotation.order = 'YXZ';
     camera.rotation.y = yaw;
     camera.rotation.x = pitch;
@@ -2781,6 +2808,24 @@ function updatePlayer(delta) {
     camera.rotation.z = gameState.leaning * 0.2;
     updateLeanDisplay();
     checkExfil();
+    updateWeaponSway(delta, movement.length());
+}
+
+function updateWeaponSway(delta, movementMagnitude) {
+    if (!weaponModel) return;
+    const yawDelta = yaw - previousYaw;
+    const pitchDelta = pitch - previousPitch;
+    previousYaw = yaw;
+    previousPitch = pitch;
+
+    const swayTargetX = THREE.MathUtils.clamp(-yawDelta * 0.6, -0.08, 0.08);
+    const swayTargetY = THREE.MathUtils.clamp(-pitchDelta * 0.6, -0.06, 0.06);
+    weaponSway.x += (swayTargetX - weaponSway.x) * Math.min(1, delta * 8);
+    weaponSway.y += (swayTargetY - weaponSway.y) * Math.min(1, delta * 8);
+
+    const moveOffset = Math.min(movementMagnitude * 0.2, 0.06);
+    weaponModel.position.x = 0.3 + weaponSway.x;
+    weaponModel.position.y = -0.25 + weaponSway.y - moveOffset;
 }
 
 function checkExfil() {
@@ -2821,6 +2866,7 @@ function checkInteractions() {
 // Mission Timer
 function updateMissionTimer() {
     if (gameState.phase !== 'active') return;
+    if (!missionStartTime) return;
 
     const elapsed = (Date.now() - missionStartTime) / 1000;
     const minutes = Math.floor(elapsed / 60);
@@ -2936,6 +2982,8 @@ function deployMission() {
     if (!pendingMission) return;
     gameState.mode = pendingMission;
     gameState.phase = 'active';
+    statusUpdateTimer = 0;
+    movementTime = 0;
 
     document.getElementById('briefing-screen').classList.add('hidden');
     document.getElementById('hud').classList.remove('hidden');
@@ -3048,7 +3096,11 @@ function animate(time) {
         updateEffects(delta);
         checkInteractions();
         updateMissionTimer();
-        updateMissionStatus();
+        statusUpdateTimer += delta;
+        if (statusUpdateTimer >= 0.25) {
+            updateMissionStatus();
+            statusUpdateTimer = 0;
+        }
     }
 
     renderer.render(scene, camera);
