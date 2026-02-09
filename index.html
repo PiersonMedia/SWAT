@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TACTICAL OPS - SWAT CQB Simulator</title>
+  <link rel="stylesheet" href="assets/css/main.css" />
+</head>
+<body>
+<!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-text">INITIALIZING TACTICAL SYSTEMS</div>
+        <div class="loading-bar">
+            <div class="loading-fill"></div>
+        </div>
+    </div>
+    
+    <!-- Menu Screen -->
+    <div id="menu-screen" class="hidden">
+        <div id="menu-title">TACTICAL OPS</div>
+        <div id="menu-subtitle">SWAT CQB SIMULATOR</div>
+        
+        <div class="menu-section">
+            <div class="menu-label">OPERATION</div>
+            <div class="mode-buttons">
+                <button class="menu-btn primary" onclick="startMission('hostage')">
+                    START OPERATION NIGHTFALL
+                </button>
+                <div style="margin-top:10px; font-size:12px; color:#6ef5b8; opacity:0.85;">
+                    Hostage Rescue • Gas Station • Deploy from SWAT truck
+                </div>
+            </div>
+        </div>
+        
+        <div class="menu-section">
+            <div class="menu-label">TRAINING</div>
+            <div class="mode-buttons">
+                <button class="menu-btn" onclick="startMission('shoot_house')">
+                    SHOOT HOUSE
+                </button>
+                <button class="menu-btn" onclick="startMission('breaching')">
+                    BREACHING DRILL
+                </button>
+            </div>
+        </div>
+        
+        <div id="controls-info">
+            <span>WASD</span> Move &nbsp;&nbsp;
+            <span>MOUSE</span> Look &nbsp;&nbsp;
+            <span>LMB</span> Fire &nbsp;&nbsp;
+            <span>RMB</span> Aim &nbsp;&nbsp;
+            <span>R</span> Reload &nbsp;&nbsp;
+            <span>Q/E</span> Lean &nbsp;&nbsp;
+            <span>C</span> Crouch &nbsp;&nbsp;
+            <span>CTRL</span> Prone<br>
+            <span>F</span> Interact &nbsp;&nbsp;
+            <span>G</span> Grenade &nbsp;&nbsp;
+            <span>T</span> Team Orders &nbsp;&nbsp;
+            <span>1-5</span> Equipment &nbsp;&nbsp;
+            <span>SHIFT</span> Sprint &nbsp;&nbsp;
+            <span>TAB</span> Scoreboard
+        </div>
+    </div>
+    
+    <!-- Game Container -->
+    <div id="game-container"></div>
+    
+    <!-- HUD -->
+    <div id="hud" class="hidden">
+        <!-- Crosshair -->
+        <div id="crosshair">
+            <div class="dot"></div>
+        </div>
+        
+        <!-- Hit Marker -->
+        <div id="hit-marker"></div>
+        
+        <!-- Damage Overlay -->
+        <div id="damage-overlay"></div>
+        
+        <!-- Mission Info -->
+        <div id="mission-info" class="hud-element">
+            <div id="mission-title">OPERATION NIGHTFALL</div>
+            <div id="mission-objective">Secure the building and rescue hostages</div>
+            <div id="mission-timer">12:45</div>
+        </div>
+        
+        <!-- Compass -->
+        <div id="compass" class="hud-element">
+            N &nbsp; NE &nbsp; <span style="color: #00ff88;">E</span> &nbsp; SE &nbsp; S
+        </div>
+        
+        <!-- Team Status -->
+        <div id="team-status" class="hud-element">
+            <div class="team-member">
+                <div class="team-icon">1</div>
+                <span>ALPHA - Point</span>
+            </div>
+            <div class="team-member">
+                <div class="team-icon">2</div>
+                <span>BRAVO - Breacher</span>
+            </div>
+            <div class="team-member">
+                <div class="team-icon">3</div>
+                <span>CHARLIE - Sniper</span>
+            </div>
+            <div class="team-member">
+                <div class="team-icon">4</div>
+                <span>DELTA - Medic</span>
+            </div>
+        </div>
+        
+        <!-- Health -->
+        <div id="health-container" class="hud-element">
+            <div id="health-label">HEALTH</div>
+            <div id="health-bar">
+                <div id="health-fill" style="width: 100%"></div>
+                <div id="health-text">100</div>
+            </div>
+        </div>
+        
+        <!-- Equipment -->
+        <div id="equipment" class="hud-element">
+            <div class="equip-slot active">
+                <span class="key">1</span>
+                <div class="equip-icon">🔫</div>
+                <div style="font-size: 8px;">M4A1</div>
+            </div>
+            <div class="equip-slot">
+                <span class="key">2</span>
+                <div class="equip-icon">🔫</div>
+                <div style="font-size: 8px;">G17</div>
+            </div>
+            <div class="equip-slot">
+                <span class="key">3</span>
+                <div class="equip-icon">💨</div>
+                <div style="font-size: 8px;">FLASH</div>
+                <span class="count">x3</span>
+            </div>
+            <div class="equip-slot">
+                <span class="key">4</span>
+                <div class="equip-icon">💨</div>
+                <div style="font-size: 8px;">SMOKE</div>
+                <span class="count">x2</span>
+            </div>
+            <div class="equip-slot">
+                <span class="key">5</span>
+                <div class="equip-icon">🧨</div>
+                <div style="font-size: 8px;">C2</div>
+                <span class="count">x2</span>
+            </div>
+        </div>
+        
+        <!-- Weapon Info -->
+        <div id="weapon-info" class="hud-element">
+            <div id="weapon-name">M4A1 CARBINE</div>
+            <div id="ammo-count">30 <span>/ 120</span></div>
+        </div>
+        
+        <!-- Stance -->
+        <div id="stance-indicator" class="hud-element">
+            <div class="stance-icon">🧍</div>
+            <div>STANDING</div>
+        </div>
+        
+        <!-- Lean Indicator -->
+        <div id="lean-indicator">◄ LEAN</div>
+        
+        <!-- Interaction Prompt -->
+        <div id="interaction-prompt">
+            Press <span>[F]</span> to breach door
+        </div>
+        
+        <!-- Notification -->
+        <div id="notification">FLASHBANG OUT!</div>
+    </div>
+    
+    <!-- Order Wheel -->
+    <div id="order-wheel">
+        <div class="order-option" style="top: 0; left: 50%; transform: translateX(-50%);" onclick="giveOrder('stack')">
+            <div class="icon">👥</div>
+            STACK UP
+        </div>
+        <div class="order-option" style="top: 50%; right: 0; transform: translateY(-50%);" onclick="giveOrder('breach')">
+            <div class="icon">💥</div>
+            BREACH
+        </div>
+        <div class="order-option" style="bottom: 0; left: 50%; transform: translateX(-50%);" onclick="giveOrder('hold')">
+            <div class="icon">✋</div>
+            HOLD
+        </div>
+        <div class="order-option" style="top: 50%; left: 0; transform: translateY(-50%);" onclick="giveOrder('flash')">
+            <div class="icon">💨</div>
+            FLASH & CLEAR
+        </div>
+        <div class="order-option" style="top: 20%; right: 20%;" onclick="giveOrder('cover')">
+            <div class="icon">🎯</div>
+            COVER
+        </div>
+        <div class="order-option" style="bottom: 20%; right: 20%;" onclick="giveOrder('move')">
+            <div class="icon">➡️</div>
+            MOVE
+        </div>
+        <div class="order-option" style="bottom: 20%; left: 20%;" onclick="giveOrder('fall_back')">
+            <div class="icon">⬅️</div>
+            FALL BACK
+        </div>
+        <div class="order-option" style="top: 20%; left: 20%;" onclick="giveOrder('restrain')">
+            <div class="icon">🔗</div>
+            RESTRAIN
+        </div>
+    </div>
+    
+    <!-- Minimap -->
+    <div id="minimap" class="hidden">
+        <canvas id="minimap-canvas"></canvas>
+    </div>
+
+    
+    
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
